@@ -15,6 +15,53 @@ import umas from '../umas.json';
 import icons from '../icons.json';
 import skills from '../uma-skill-tools/data/skill_data.json';
 
+// This does introduce a duplication of (de)serialization code between HorseDef.tsx and app.tsx - good enough for now
+async function serializeUma(uma: HorseState) {
+	const json = JSON.stringify(uma.toJS());
+	const enc = new TextEncoder();
+	const stringStream = new ReadableStream({
+		start(controller) {
+			controller.enqueue(enc.encode(json));
+			controller.close();
+		}
+	});
+	const zipped = stringStream.pipeThrough(new CompressionStream('gzip'));
+	const reader = zipped.getReader();
+	let buf = new Uint8Array();
+	let result;
+	while ((result = await reader.read())) {
+		if (result.done) {
+			return encodeURIComponent(btoa(String.fromCharCode(...buf)));
+		} else {
+			buf = new Uint8Array([...buf, ...result.value]);
+		}
+	}
+}
+
+async function deserializeUma(hash: string) {
+	const zipped = atob(decodeURIComponent(hash.trim().replace(/['"]+/g, '')));
+	const buf = new Uint8Array(zipped.split('').map(c => c.charCodeAt(0)));
+	const stringStream = new ReadableStream({
+		start(controller) {
+			controller.enqueue(buf);
+			controller.close();
+		}
+	});
+	const unzipped = stringStream.pipeThrough(new DecompressionStream('gzip'));
+	const reader = unzipped.getReader();
+	const decoder = new TextDecoder();
+	let json = '';
+	let result;
+	while ((result = await reader.read())) {
+		if (result.done) {
+			const o = JSON.parse(json);
+			return new HorseState(o).set('skills', SkillSet(o.skills));
+		} else {
+			json += decoder.decode(result.value);
+		}
+	}
+}
+
 function skilldata(id: string) {
 	return skills[id.split('-')[0]];
 }
@@ -220,6 +267,18 @@ function uniqueSkillForUma(oid: typeof umaAltIds[number]): keyof typeof skills {
 	return sid;
 }
 
+export function UmaImportExport(props) {
+	const {state, setState} = props;
+	const inputRef = useRef<HTMLInputElement>(null);
+	return (
+		<div class="horseImportExport">
+			<button onClick={async () => { const hash = await serializeUma(state); navigator.clipboard.writeText(hash); }}>Copy Uma Hash</button>
+			<input type="text" placeholder="Paste hash to load Uma" ref={inputRef} />
+			<button onClick={async () => { const hash = inputRef.current?.value || ''; const newState = await deserializeUma(hash); setState(newState); }}>Load</button>
+		</div>
+	);
+}
+
 let totalTabs = 0;
 export function horseDefTabs() {
 	return totalTabs;
@@ -332,6 +391,7 @@ export function HorseDef(props) {
 					<AptitudeSelect a={state.strategyAptitude} setA={setter('strategyAptitude')} tabindex={tabnext()} />
 				</div>
 			</div>
+			<UmaImportExport state={state} setState={setState} />
 			<div class="horseSkillHeader">Skills</div>
 			<div class="horseSkillListWrapper" onClick={handleSkillClick}>
 				<ul class="horseSkillList">

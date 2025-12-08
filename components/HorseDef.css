@@ -329,3 +329,35 @@
 	font-size: 2em;
 	margin: 0 6px;
 }
+
+.horseImportExport {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0 25px;
+}
+
+.horseImportExport > div {
+	align-items: center;
+	border: 2px solid rgb(224, 214, 204);
+	border-radius: 6px;
+	background: white;
+	color: rgb(121, 64, 22);
+	display: flex;
+	font-weight: 700;
+	padding: 8px;
+	gap: 8px;
+}
+
+.horseImportExport input {
+	flex: 1;
+}
+
+.horseImportExport button {
+	background: linear-gradient(#fff, #e4e0e9);
+	border: 2px solid rgb(181, 174, 187);
+	border-radius: 8px;
+	color: rgb(121, 64, 22);
+	padding: 4px 8px;
+	cursor: pointer;
+}

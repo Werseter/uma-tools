@@ -3,14 +3,14 @@ import { useState, useReducer, useMemo, useLayoutEffect, useRef } from 'preact/h
 import { memo } from 'preact/compat';
 import { IntlProvider, Text, Localizer, useText } from 'preact-i18n';
 
-import { O, c, id, useLens, useGetter, Delete } from '../optics';
+import { O, c, id, useLens, useGetter, useSetter, Delete } from '../optics';
 
 import { useLanguage } from '../components/Language';
 import { SkillList, Skill, ExpandedSkillDetails } from '../components/SkillList';
 
 import { HorseParameters } from '../uma-skill-tools/HorseTypes';
 
-import { SkillSet, HorseState } from './HorseDefTypes';
+import { SkillSet, HorseState, deserializeUma, serializeUma } from './HorseDefTypes';
 
 import './HorseDef.css';
 
@@ -315,6 +315,19 @@ function skillOrder(a, b) {
 	return +(y < x) - +(x < y) || +(b < a) - +(a < b);
 }
 
+export function UmaImportExport(props) {
+	const horseState = useGetter(props.state);
+	const setHorseState = useSetter(props.state);
+	const inputRef = useRef<HTMLInputElement>(null);
+	return (
+		<div class="horseImportExport">
+			<button onClick={async () => { const hash = await serializeUma(horseState); navigator.clipboard.writeText(hash); }}>Copy Uma Hash</button>
+			<input type="text" placeholder="Paste hash to load Uma" ref={inputRef} />
+			<button onClick={async () => { const hash = inputRef.current?.value || ''; const newState = await deserializeUma(hash); setHorseState(newState); }}>Load</button>
+		</div>
+	);
+}
+
 let totalTabs = 0;
 export function horseDefTabs() {
 	return totalTabs;
@@ -462,6 +475,7 @@ export const HorseDef = memo(function HorseDef(props) {
 					</div>
 					<div><PopularitySelect p={props.state.popularity} tabindex={tabnext()} /></div>
 				</div>
+				<UmaImportExport state={props.state} />
 				<div class="horseSkillHeader"><Text id="skillheader" /></div>
 				<div class="horseSkillListWrapper" onClick={handleSkillClick}>
 					<ul class="horseSkillList">

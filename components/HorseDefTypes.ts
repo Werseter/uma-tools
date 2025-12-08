@@ -56,3 +56,53 @@ export const DEFAULT_HORSE_STATE = {
 	mood: 2,
 	popularity: 1
 };
+
+// This does introduce a duplication of (de)serialization code between HorseDefTypes.tsx and app.tsx - good enough for now
+export async function serializeUma(uma: HorseState) {
+	const json = JSON.stringify(uma);
+	const enc = new TextEncoder();
+	const stringStream = new ReadableStream({
+		start(controller) {
+			controller.enqueue(enc.encode(json));
+			controller.close();
+		}
+	});
+	const zipped = stringStream.pipeThrough(new CompressionStream('gzip'));
+	const reader = zipped.getReader();
+	let buf = new Uint8Array();
+	let result;
+	while ((result = await reader.read())) {
+		if (result.done) {
+			return encodeURIComponent(btoa(String.fromCharCode(...buf)));
+		} else {
+			buf = new Uint8Array([...buf, ...result.value]);
+		}
+	}
+}
+
+export async function deserializeUma(hash: string) {
+	const zipped = atob(decodeURIComponent(hash.trim().replace(/['"]+/g, '')));
+	const buf = new Uint8Array(zipped.split('').map(c => c.charCodeAt(0)));
+	const stringStream = new ReadableStream({
+		start(controller) {
+			controller.enqueue(buf);
+			controller.close();
+		}
+	});
+	const unzipped = stringStream.pipeThrough(new DecompressionStream('gzip'));
+	const reader = unzipped.getReader();
+	const decoder = new TextDecoder();
+	let json = '';
+	let result;
+	while ((result = await reader.read())) {
+		if (result.done) {
+			const o = JSON.parse(json);
+			const NEW_HORSE_FIELDS = Object.freeze({mood: 2, popularity: 1});  // added later
+			const uma = Object.assign({}, NEW_HORSE_FIELDS, o, {skills: SkillSet(o.skills)});
+			console.log('Deserialized uma', uma);
+			return uma;
+		} else {
+			json += decoder.decode(result.value);
+		}
+	}
+}

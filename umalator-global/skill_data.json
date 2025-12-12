@@ -410,6 +410,28 @@
     ],
     "rarity": 4
   },
+  "100251": {
+    "alternatives": [
+      {
+        "baseDuration": 60000,
+        "condition": "distance_rate>=50&order_rate>=40&order_rate<=70",
+        "effects": [
+          {
+            "modifier": 2500,
+            "target": 1,
+            "type": 27
+          },
+          {
+            "modifier": -500,
+            "target": 9,
+            "type": 21
+          }
+        ],
+        "precondition": ""
+      }
+    ],
+    "rarity": 5
+  },
   "100261": {
     "alternatives": [
       {
@@ -7796,6 +7818,28 @@
     ],
     "rarity": 1
   },
+  "900251": {
+    "alternatives": [
+      {
+        "baseDuration": 36000,
+        "condition": "distance_rate>=50&order_rate>=40&order_rate<=70",
+        "effects": [
+          {
+            "modifier": 500,
+            "target": 1,
+            "type": 27
+          },
+          {
+            "modifier": -250,
+            "target": 9,
+            "type": 21
+          }
+        ],
+        "precondition": ""
+      }
+    ],
+    "rarity": 1
+  },
   "900261": {
     "alternatives": [
       {
@@ -7940,6 +7984,23 @@
             "modifier": 1000,
             "target": 1,
             "type": 31
+          }
+        ],
+        "precondition": ""
+      }
+    ],
+    "rarity": 1
+  },
+  "900391": {
+    "alternatives": [
+      {
+        "baseDuration": 30000,
+        "condition": "is_finalcorner==1&corner==0&blocked_side_continuetime>=2",
+        "effects": [
+          {
+            "modifier": 1500,
+            "target": 1,
+            "type": 27
           }
         ],
         "precondition": ""
